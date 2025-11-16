@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/styles.css">
+    <title>Starting Service</title>
+    <noscript>
+        <meta http-equiv="refresh" content="15">
+    </noscript>
+
+    <script>
+        let healthCheckInterval;
+
+        function checkHealth() {
+            const url = '<%= healthCheckUrl %>';
+            fetch(url)
+                .then(response => {
+
+                    if (response.ok) {
+                        response.json().then(json => {
+                            if (json["status"] == "OK") {
+                                clearInterval(healthCheckInterval);
+                                location.replace(location.href);
+                            } else {
+                                console.log('Health check failed, will check again in 5 seconds. JSON Output: ', json);
+                            }
+                        }).catch(error => {
+                            console.log('JSON parse error occurred, will check again in 5 seconds.', error);
+                        });
+
+                    } else {
+                        console.log('Health check failed, will check again in 5 seconds.');
+                    }
+                })
+                .catch(error => {
+                    console.log('Network error occurred, will check again in 5 seconds.', error);
+                });
+        }
+
+        window.onload = function () {
+            healthCheckInterval = setInterval(checkHealth, 5000);
+        };
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Starting Service</h1>
+        <div class="loader"></div>
+        <p>Loading, please wait...</p>
+    </div>
+</body>
+
+</html>
