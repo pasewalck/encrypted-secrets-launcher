@@ -9,33 +9,30 @@ This project was designed for use in conjunction with the project [Aktivistio Ac
 ```
 import { createLauncher,Secret } from "encrypted-secrets-launcher";
 
-createLauncher([
-    new Secret("DATABASE_KEY",() => generateSecretFunction())
-],"data/database-secrets.txt",3000,() => {
-    const password = generatePasswordFunction(40)
-    logger.info(`Launcher initiated with new password: ${password}`)
-    return password;
-}
-,(secrets) => {
-    logger.info("Starting main service ...")
-    const child = spawn('node', ['src/server.js'], {
-        env: {
-            ...process.env,
-            ...secrets
-        },
-        stdio: 'inherit'
-    });
-},
-(secrets) => {
+createLauncher(
+    [
+        new Secret("DATABASE_KEY",() => generateSecretFunction())
+    ],"data/database-secrets.txt",3000,() => {
+        const password = generatePasswordFunction(40)
+        console.log(`Launcher initiated with new password: ${password}`)
+        return password;
+    },(secrets) => {
+        console.log("Starting main service ...")
+        const child = spawn('node', ['src/server.js'], {
+            env: {
+                ...process.env,
+                ...secrets
+            },
+            stdio: 'inherit'
+        });
+    },(secrets) => {
 
-},
-(isError,...message) => {
-    if(isError)
-        console.error(message.join(" "))
-    else
-        console.log(message.join(" "))
-},
-new URL("http://localhost:3000/health")
+    },(isError,...message) => {
+        if(isError)
+            console.error(message.join(" "))
+        else
+            console.log(message.join(" "))
+    },new URL("http://localhost:3000/health")
 )
 
 ```
