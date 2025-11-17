@@ -4,11 +4,19 @@
   "main": "index.js",
   "author": "",
   "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "test:use-launcher": "nodemon tests/use-launcher.js"
+  },
   "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
   "dependencies": {
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
+    "nodemailer": "^7.0.10",
     "path": "^0.12.7",
     "url": "^0.11.4"
   }
