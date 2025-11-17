@@ -24,9 +24,9 @@ export function encrypt(message, password) {
  */
 export function decrypt(encryptedBlob, password) {
     const buffer = Buffer.from(encryptedBlob, 'hex');
-    const iv = buffer.slice(0, 16);
-    const salt = buffer.slice(16, 32);
-    const encryptedData = buffer.slice(32).toString('hex');
+    const iv = buffer.subarray(0, 16);
+    const salt = buffer.subarray(16, 32);
+    const encryptedData = buffer.subarray(32).toString('hex');
 
     const key = crypto.scryptSync(password, salt, 32);
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
