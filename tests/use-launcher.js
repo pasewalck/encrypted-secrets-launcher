@@ -7,7 +7,7 @@ import express from "express";
  * @param {number} [length=56] - The length of the token to be generated.
  * @returns {string} A random token as a hexadecimal string.
  */
-function tokenGenerate(length = 30) {
+function generateToken(length = 30) {
     return Buffer.from(randomBytes(length)).toString('hex');
 }
 
@@ -31,9 +31,9 @@ function runServer(secrets) {
 
 createLauncher(
     [
-        new Secret("DATABASE_KEY", () => tokenGenerate())
+        new Secret("DATABASE_KEY", () => generateToken())
     ], "database-secrets.txt", 3000, () => {
-        const password = tokenGenerate(10)
+        const password = generateToken(10)
         console.log(`Launcher initiated with new password: ${password}`)
         return password;
     }, (secrets) => {
