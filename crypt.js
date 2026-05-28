@@ -60,7 +60,7 @@ export function deriveKeyFromPassword(password, salt) {
  * @param {string} password - The password used for encryption.
  * @returns {string} The encrypted message in hexadecimal format.
  */
-export function encrypt_with_password(message, password) {
+export function encryptWithPassword(message, password) {
     const salt = crypto.randomBytes(16);
     const derivedKey = deriveKeyFromPassword(password, salt);
     return encrypt(message, derivedKey, salt);
@@ -72,7 +72,7 @@ export function encrypt_with_password(message, password) {
  * @param {string} password - The password used for decryption.
  * @returns {string} The decrypted message.
  */
-export function decrypt_with_password(encryptedBlob, password) {
+export function decryptWithPassword(encryptedBlob, password) {
     const buffer = Buffer.from(encryptedBlob, 'hex');
     const salt = buffer.subarray(16, 32);
     const derivedKey = deriveKeyFromPassword(password, salt);
