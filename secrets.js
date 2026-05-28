@@ -50,8 +50,16 @@ export function loadSecrets(secretsFilename, password) {
  * @param {string} secretsFilename - The path to save the secrets file.
  * @param {string} password - The password used for encryption.
  * @param {Object} secrets - The secrets to be saved.
+ * @param {boolean} legacy - Flag to use legacy saving.
  */
-export function createOrUpdateSecretsFile(secretsFilename, password, secrets) {
+export function createOrUpdateSecretsFile(secretsFilename, password, secrets, legacy = false) {
+    const secretsAsString = JSON.stringify(secrets)
+
+    if (legacy) {
+        fs.writeFileSync(secretsFilename, encrypt_with_password(key, password));
+        return
+    }
+
     const key = generateKey();
     var lines;
     if (!fs.existsSync(secretsFilename)) {
@@ -63,6 +71,6 @@ export function createOrUpdateSecretsFile(secretsFilename, password, secrets) {
         }
     }
 
-    lines[lines.length - 1] = encrypt(JSON.stringify(secrets), key);
+    lines[lines.length - 1] = encrypt(secretsAsString, key);
     fs.writeFileSync(secretsFilename, lines.join("\n"));
 }
