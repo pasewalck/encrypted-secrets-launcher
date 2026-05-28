@@ -1,12 +1,14 @@
 import express from "express";
 import fs from "fs";
-import { encrypt, decrypt, generateKey, encrypt_with_password, decrypt_with_password } from "./crypt.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { loadSecrets, createOrUpdateSecretsFile, Secret } from "./secrets.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+export { Secret };
 
 /**
  * @callback onMessage
@@ -18,72 +20,6 @@ const __dirname = dirname(__filename);
  * @callback onReturnSecrets
  * @param {JSON} secrets
  */
-
-/**
- * Represents a secret with a key and a generator function.
- */
-export class Secret {
-    /**
-     * Creates an instance of Secret.
-     * @param {string} key - The key of the secret.
-     * @param {Function} generator - A function that generates the value for the secret.
-     */
-    constructor(key, generator) {
-        this.key = key;
-        this.generator = generator;
-    }
-}
-
-/**
- * Loads and decrypts secrets from a specified file.
- * @param {string} secretsFilename - The path to the secrets file.
- * @param {string} password - The password used for decryption.
- * @returns {Object} - The decrypted secrets as a JavaScript object.
- */
-function loadSecrets(secretsFilename, password) {
-    const lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
-    if (lines.length == 1) {
-        const decryptedSecrets = decrypt_with_password(lines[0], password);
-        return JSON.parse(decryptedSecrets);
-    } else {
-        for (let i = 0; i < lines.length - 1; i++) {
-            const line = lines[i];
-            try {
-                const decryptedKey = decrypt_with_password(line, password);
-                const decryptedSecrets = decrypt(lines[lines.length - 1], decryptedKey);
-                return JSON.parse(decryptedSecrets);
-            } catch (error) {
-                if (error.message.includes("bad decrypt")) {
-                } else {
-                    throw error
-                }
-            }
-        }
-        throw new Error("bad decrypt")
-    }
-}
-
-/**
- * Creates (or updates) and encrypts a secrets file with the provided secrets.
- * @param {string} secretsFilename - The path to save the secrets file.
- * @param {string} password - The password used for encryption.
- * @param {Object} secrets - The secrets to be saved.
- */
-function createOrUpdateSecretsFile(secretsFilename, password, secrets) {
-    const key = generateKey()
-    var lines;
-    if (!fs.existsSync(secretsFilename)) {
-        lines = [encrypt_with_password(key, password), ""]
-    } else {
-        lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
-        if (lines.length == 1) {
-            lines = [encrypt_with_password(key, password), ""]
-        }
-    }
-
-    lines[lines.length - 1] = encrypt(JSON.stringify(secrets), key);
-    fs.writeFileSync(secretsFilename, lines.join("\n"));
-}
 
 /**
  * Closes a http Server (closes all connections to make sure close is quick).
