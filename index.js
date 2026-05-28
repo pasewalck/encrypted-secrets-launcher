@@ -1,6 +1,6 @@
 import express from "express";
 import fs from "fs";
-import { encrypt, decrypt, generateKey } from "./crypt.js";
+import { encrypt, decrypt, generateKey, encrypt_with_password, decrypt_with_password } from "./crypt.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -43,13 +43,13 @@ export class Secret {
 function loadSecrets(secretsFilename, password) {
     const lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
     if (lines.length == 1) {
-        const decryptedSecrets = decrypt(lines[0], password);
+        const decryptedSecrets = decrypt_with_password(lines[0], password);
         return JSON.parse(decryptedSecrets);
     } else {
         for (let i = 0; i < lines.length - 1; i++) {
             const line = lines[i];
             try {
-                const decryptedKey = decrypt(line, password);
+                const decryptedKey = decrypt_with_password(line, password);
                 const decryptedSecrets = decrypt(lines[lines.length - 1], decryptedKey);
                 return JSON.parse(decryptedSecrets);
             } catch (error) {
@@ -73,11 +73,11 @@ function createOrUpdateSecretsFile(secretsFilename, password, secrets) {
     const key = generateKey()
     var lines;
     if (!fs.existsSync(secretsFilename)) {
-        lines = [encrypt(key, password), ""]
+        lines = [encrypt_with_password(key, password), ""]
     } else {
         lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
         if (lines.length == 1) {
-            lines = [encrypt(key, password), ""]
+            lines = [encrypt_with_password(key, password), ""]
         }
     }
 
