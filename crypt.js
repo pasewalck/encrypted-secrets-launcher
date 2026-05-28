@@ -34,3 +34,11 @@ export function decrypt(encryptedBlob, password) {
     decrypted += decipher.final('utf8');
     return decrypted;
 }
+
+/**
+ * Generates a random key
+ * @returns {string} A random token as a hexadecimal string.
+ */
+export function generateKey() {
+    return Buffer.from(crypto.randomBytes(512)).toString('hex');
+}

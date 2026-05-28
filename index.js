@@ -1,6 +1,6 @@
 import express from "express";
 import fs from "fs";
-import { encrypt, decrypt } from "./crypt.js";
+import { encrypt, decrypt, generateKey } from "./crypt.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -41,9 +41,26 @@ export class Secret {
  * @returns {Object} - The decrypted secrets as a JavaScript object.
  */
 function loadSecrets(secretsFilename, password) {
-    const encryptedBlob = fs.readFileSync(secretsFilename, 'utf8');
-    const decryptedSecrets = decrypt(encryptedBlob, password);
-    return JSON.parse(decryptedSecrets);
+    const lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
+    if (lines.length == 1) {
+        const decryptedSecrets = decrypt(lines[0], password);
+        return JSON.parse(decryptedSecrets);
+    } else {
+        for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i];
+            try {
+                const decryptedKey = decrypt(line, password);
+                const decryptedSecrets = decrypt(lines[lines.length - 1], decryptedKey);
+                return JSON.parse(decryptedSecrets);
+            } catch (error) {
+                if (error.message.includes("bad decrypt")) {
+                } else {
+                    throw error
+                }
+            }
+        }
+        throw new Error("bad decrypt")
+    }
 }
 
 /**
@@ -53,8 +70,19 @@ function loadSecrets(secretsFilename, password) {
  * @param {Object} secrets - The secrets to be saved.
  */
 function createOrUpdateSecretsFile(secretsFilename, password, secrets) {
-    const encryptedSecrets = encrypt(JSON.stringify(secrets), password);
-    fs.writeFileSync(secretsFilename, encryptedSecrets);
+    const key = generateKey()
+    var lines;
+    if (!fs.existsSync(secretsFilename)) {
+        lines = [encrypt(key, password), ""]
+    } else {
+        lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
+        if (lines.length == 1) {
+            lines = [encrypt(key, password), ""]
+        }
+    }
+
+    lines[lines.length - 1] = encrypt(JSON.stringify(secrets), key);
+    fs.writeFileSync(secretsFilename, lines.join("\n"));
 }
 
 /**
