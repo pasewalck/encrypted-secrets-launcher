@@ -39,7 +39,7 @@ describe('createLauncher', () => {
 		expect(app).toBeDefined();
 	});
 
-	describe('routes (locked mode — pre-existing file)', () => {
+	describe('routes', () => {
 		let app;
 
 		beforeEach(() => {
