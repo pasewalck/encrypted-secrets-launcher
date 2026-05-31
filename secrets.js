@@ -22,8 +22,9 @@ export class Secrets {
         this.obj = null
         this.isOpen = false
         this.key = null
-        this.isInit = !fs.existsSync(filepath)
-        this.obj = this.isInit ? {
+        this.isInit = !fs.existsSync(filepath) && !fs.existsSync(legacyFilepath)
+        this.needsUpgrade = fs.existsSync(legacyFilepath) && !fs.existsSync(filepath)
+        this.obj = this.isInit || this.needsUpgrade ? {
             encryptedSecrets: {},
             keySlots: []
         } : JSON.parse(fs.readFileSync(filepath, 'utf8'));
@@ -56,11 +57,19 @@ export class Secrets {
 
     open(password) {
 
-        if (this.isInit) {
+        if (this.needsUpgrade) {
             if (this.legacyFilepath && fs.existsSync(this.legacyFilepath)) {
-                this.encryptedSecrets = legacyDecrypt(fs.readFileSync(this.legacyFilepath, 'utf8'), password)
-            }
+                const legacySecretsObj = JSON.parse(legacyDecrypt(fs.readFileSync(this.legacyFilepath, 'utf8'), password))
+                for (const v of this.vars) {
+                    const value = legacySecretsObj?.[v.key];
+                    if (value)
+                        this.secretsMap.set(v.key, value)
 
+                }
+            }
+        }
+
+        if (this.isInit || this.needsUpgrade) {
             this.key = generateKey()
             this.addKeySlot(password)
         } else {
