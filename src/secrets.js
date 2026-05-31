@@ -25,10 +25,7 @@ export class Secrets {
 		this.needsUpgrade = legacyFilepath && fs.existsSync(legacyFilepath) && !fs.existsSync(filepath);
 		this.obj =
 			this.isInit || this.needsUpgrade
-				? {
-						encryptedSecrets: {},
-						keySlots: [],
-					}
+				? { encryptedSecrets: {}, keySlots: [] }
 				: JSON.parse(fs.readFileSync(filepath, 'utf8'));
 	}
 
