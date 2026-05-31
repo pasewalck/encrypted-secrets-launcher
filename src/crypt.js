@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from 'crypto';
 
 /**
  * @typedef {Object} EncryptedPayload
@@ -17,16 +17,16 @@ import crypto from "crypto";
  * @returns {string} The decrypted message.
  */
 export function legacyDecrypt(encrypted, password) {
-    const buffer = Buffer.from(encrypted, 'hex');
-    const iv = buffer.subarray(0, 16);
-    const salt = buffer.subarray(16, 32);
-    const encryptedData = buffer.subarray(32).toString('hex');
+	const buffer = Buffer.from(encrypted, 'hex');
+	const iv = buffer.subarray(0, 16);
+	const salt = buffer.subarray(16, 32);
+	const encryptedData = buffer.subarray(32).toString('hex');
 
-    const key = crypto.scryptSync(password, salt, 32);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+	const key = crypto.scryptSync(password, salt, 32);
+	const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+	let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+	decrypted += decipher.final('utf8');
+	return decrypted;
 }
 
 /**
@@ -38,37 +38,32 @@ export function legacyDecrypt(encrypted, password) {
  * @returns {EncryptedPayload}
  */
 export function encrypt(message, options) {
+	let key;
+	let passwordSalt = undefined;
 
-    let key;
-    let passwordSalt = undefined;
+	if (options.password) {
+		passwordSalt = crypto.randomBytes(16);
+		key = deriveKeyFromPassword(options.password, passwordSalt);
+	} else {
+		key = typeof options.key === 'string' ? Buffer.from(options.key, 'base64url') : options.key;
+	}
 
-    if (options.password) {
-        passwordSalt = crypto.randomBytes(16);
-        key = deriveKeyFromPassword(options.password, passwordSalt)
-    } else {
-        key = typeof options.key === "string" ? Buffer.from(options.key, "base64url") : options.key;
-    }
+	const alg = 'aes-256-gcm';
+	const iv = crypto.randomBytes(16);
+	const cipher = crypto.createCipheriv(alg, key, iv);
 
-    const alg = "aes-256-gcm"
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(alg, key, iv);
+	const encrypted = Buffer.concat([cipher.update(message, 'utf8'), cipher.final()]);
 
-    const encrypted = Buffer.concat([
-        cipher.update(message, "utf8"),
-        cipher.final()
-    ]);
+	const tag = cipher.getAuthTag();
 
-    const tag = cipher.getAuthTag();
-
-    return {
-        v: 1,
-        alg: alg,
-        iv: iv.toString("base64url"),
-        tag: tag.toString("base64url"),
-        passwordSalt: passwordSalt ? passwordSalt.toString("base64url") : null,
-        data: encrypted.toString("base64url")
-    };
-
+	return {
+		v: 1,
+		alg: alg,
+		iv: iv.toString('base64url'),
+		tag: tag.toString('base64url'),
+		passwordSalt: passwordSalt ? passwordSalt.toString('base64url') : null,
+		data: encrypted.toString('base64url'),
+	};
 }
 
 /**
@@ -80,27 +75,19 @@ export function encrypt(message, options) {
  * @returns {string}
  */
 export function decrypt(payload, options) {
+	const key = options.key
+		? typeof options.key === 'string'
+			? Buffer.from(options.key, 'base64url')
+			: options.key
+		: deriveKeyFromPassword(options.password, Buffer.from(payload.passwordSalt, 'base64url'));
 
-    const key = options.key ? (typeof options.key === "string" ? Buffer.from(options.key, "base64url") : options.key) : deriveKeyFromPassword(options.password, Buffer.from(payload.passwordSalt, "base64url"));
+	const decipher = crypto.createDecipheriv(payload.alg, key, Buffer.from(payload.iv, 'base64url'));
 
-    const decipher = crypto.createDecipheriv(
-        payload.alg,
-        key,
-        Buffer.from(payload.iv, "base64url")
-    );
+	decipher.setAuthTag(Buffer.from(payload.tag, 'base64url'));
 
-    decipher.setAuthTag(
-        Buffer.from(payload.tag, "base64url")
-    );
+	const decrypted = Buffer.concat([decipher.update(Buffer.from(payload.data, 'base64url')), decipher.final()]);
 
-    const decrypted = Buffer.concat([
-        decipher.update(
-            Buffer.from(payload.data, "base64url")
-        ),
-        decipher.final()
-    ]);
-
-    return decrypted.toString("utf8");
+	return decrypted.toString('utf8');
 }
 
 /**
@@ -108,9 +95,7 @@ export function decrypt(payload, options) {
  * @returns {string} A random key as a hexadecimal string.
  */
 export function generateKey() {
-    return crypto
-        .randomBytes(32)
-        .toString("base64url");
+	return crypto.randomBytes(32).toString('base64url');
 }
 
 /**
@@ -120,5 +105,5 @@ export function generateKey() {
  * @returns {Buffer} The derived key.
  */
 export function deriveKeyFromPassword(password, salt) {
-    return crypto.scryptSync(password, salt, 32);
+	return crypto.scryptSync(password, salt, 32);
 }
