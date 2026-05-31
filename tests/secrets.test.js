@@ -133,7 +133,7 @@ describe('Secrets', () => {
 			s.save();
 		});
 
-		it('upgrades legacy to new format and saves with generator defaults', () => {
+		it('upgrades legacy to new format', () => {
 			expect(fs.existsSync(filepath)).toBe(true);
 
 			const s2 = new Secrets(filepath, vars, legacyFilepath);
@@ -141,9 +141,7 @@ describe('Secrets', () => {
 			expect(s2.needsUpgrade).toBe(false);
 			s2.open('legacy-pass');
 			expect(s2.getIsOpen()).toBe(true);
-			// Legacy values are loaded but then overwritten by generator defaults
-			// during the open() encryption loop (obj.encryptedSecrets is initially {})
-			expect(s2.getSecrets().DB_PASSWORD).toBe('default-db-pass');
+			expect(s2.getSecrets().DB_PASSWORD).toBe('legacy-db-pass');
 		});
 	});
 

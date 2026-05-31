@@ -66,6 +66,7 @@ export class Secrets {
 				for (const v of this.vars) {
 					const value = legacySecretsObj?.[v.key];
 					if (value) this.secretsMap.set(v.key, value);
+					else this.secretsMap.set(v.key, v.generator());
 				}
 			}
 		}
@@ -112,7 +113,10 @@ export class Secrets {
 
 	save() {
 		for (const v of this.vars) {
-			this.obj.encryptedSecrets[v.key] = encrypt(JSON.stringify(this.secretsMap.get(v.key)), { key: this.key });
+			if (this.secretsMap.has(v.key))
+				this.obj.encryptedSecrets[v.key] = encrypt(JSON.stringify(this.secretsMap.get(v.key)), {
+					key: this.key,
+				});
 		}
 		fs.writeFileSync(this.filepath, JSON.stringify(this.obj));
 	}
