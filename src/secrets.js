@@ -41,7 +41,10 @@ export class Secrets {
 				key = decrypt(keySlot, { password });
 				if (key) break;
 			} catch (error) {
-				if (!error.message.includes('bad decrypt')) {
+				if (
+					!error.message.includes('bad decrypt') &&
+					!error.message.includes('Unsupported state or unable to authenticate data')
+				) {
 					throw error;
 				}
 			}
@@ -83,10 +86,18 @@ export class Secrets {
 		this.isOpen = true;
 
 		this.save();
+
+		this.isInit = false;
+		this.needsUpgrade = false;
 	}
 
 	getIsInit() {
 		return this.isInit;
+	}
+
+	close() {
+		this.isOpen = false;
+		this.secretsMap.clear();
 	}
 
 	getIsOpen() {

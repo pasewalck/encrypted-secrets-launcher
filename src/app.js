@@ -72,6 +72,7 @@ export function createLauncher(vars, options) {
 	if (secrets.getIsInit()) {
 		const psw = generatePasswort();
 		secrets.open(psw);
+		secrets.close();
 	}
 
 	const app = express();
@@ -126,7 +127,10 @@ export function createLauncher(vars, options) {
 
 				res.render('starting', { healthCheckUrl });
 			} catch (error) {
-				if (error.message.includes('bad decrypt')) {
+				if (
+					error.message.includes('bad decrypt') ||
+					error.message.includes('Unsupported state or unable to authenticate data')
+				) {
 					onMessage(false, 'Unlock failed. Bad Password.');
 					res.status(500).render('error');
 				} else {
