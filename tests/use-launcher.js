@@ -1,4 +1,4 @@
-import { createLauncher, Secret } from "../index.js";
+import { createLauncher, Var } from "../index.js";
 import { randomBytes } from "node:crypto";
 import express from "express";
 
@@ -31,8 +31,8 @@ function runServer(secrets) {
 
 createLauncher(
     [
-        new Secret("DATABASE_KEY", () => generateToken())
-    ], "database-secrets.txt", 3000, () => {
+        new Var("DATABASE_KEY", () => generateToken())
+    ], "database-secrets.json", "database-secrets.txt", 3000, () => {
         const password = generateToken(10)
         console.log(`Launcher initiated with new password: ${password}`)
         return password;
