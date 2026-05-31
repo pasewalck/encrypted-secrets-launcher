@@ -1,14 +1,10 @@
 import fs from "fs";
-import { encrypt, decrypt, generateKey, encryptWithPassword, decryptWithPassword } from "./crypt.js";
+import { decrypt, encrypt, generateKey, legacyDecrypt } from "./crypt.js";
 
-/**
- * Represents a secret with a key and a generator function.
- */
-export class Secret {
+export class Var {
     /**
-     * Creates an instance of Secret.
-     * @param {string} key - The key of the secret.
-     * @param {Function} generator - A function that generates the value for the secret.
+     * @param {string} key - The secret variable name.
+     * @param {() => any} generator - Function that generates a default value if not found.
      */
     constructor(key, generator) {
         this.key = key;
@@ -16,61 +12,90 @@ export class Secret {
     }
 }
 
-/**
- * Loads and decrypts secrets from a specified file.
- * @param {string} secretsFilename - The path to the secrets file.
- * @param {string} password - The password used for decryption.
- * @returns {Object} - The decrypted secrets as a JavaScript object.
- */
-export function loadSecrets(secretsFilename, password) {
-    const lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
-    if (lines.length == 1) {
-        const decryptedSecrets = decryptWithPassword(lines[0], password);
-        return JSON.parse(decryptedSecrets);
-    } else {
-        for (let i = 0; i < lines.length - 1; i++) {
-            const line = lines[i];
+export class Secrets {
+
+    constructor(filepath, vars, legacyFilepath = null) {
+        this.filepath = filepath;
+        this.legacyFilepath = legacyFilepath;
+        this.vars = vars;
+        this.secretsMap = new Map();
+        this.obj = null
+        this.isOpen = false
+        this.key = null
+        this.isInit = !fs.existsSync(filepath)
+        this.obj = this.isInit ? {
+            encryptedSecrets: {},
+            keySlots: []
+        } : JSON.parse(fs.readFileSync(filepath, 'utf8'));
+    }
+
+    addKeySlot(password) {
+        this.obj.keySlots.push(encrypt(this.key, { password }))
+    }
+
+    getKey(password) {
+        let key;
+
+        for (const keySlot of this.obj.keySlots) {
             try {
-                const decryptedKey = decryptWithPassword(line, password);
-                const decryptedSecrets = decrypt(lines[lines.length - 1], decryptedKey);
-                return JSON.parse(decryptedSecrets);
+                key = decrypt(keySlot, { password });
+                if (key) break;
             } catch (error) {
-                if (error.message.includes("bad decrypt")) {
-                } else {
+                if (!error.message.includes("bad decrypt")) {
                     throw error;
                 }
             }
         }
-        throw new Error("bad decrypt");
-    }
-}
 
-/**
- * Creates (or updates) and encrypts a secrets file with the provided secrets.
- * @param {string} secretsFilename - The path to save the secrets file.
- * @param {string} password - The password used for encryption.
- * @param {Object} secrets - The secrets to be saved.
- * @param {boolean} legacy - Flag to use legacy saving.
- */
-export function createOrUpdateSecretsFile(secretsFilename, password, secrets, legacy = false) {
-    const secretsAsString = JSON.stringify(secrets)
-
-    if (legacy) {
-        fs.writeFileSync(secretsFilename, encryptWithPassword(key, password));
-        return
-    }
-
-    const key = generateKey();
-    var lines;
-    if (!fs.existsSync(secretsFilename)) {
-        lines = [encryptWithPassword(key, password), ""];
-    } else {
-        lines = fs.readFileSync(secretsFilename, 'utf8').split("\n");
-        if (lines.length == 1) {
-            lines = [encryptWithPassword(key, password), ""];
+        if (key == null) {
+            throw new Error("bad decrypt");
         }
+
+        return key
     }
 
-    lines[lines.length - 1] = encrypt(secretsAsString, key);
-    fs.writeFileSync(secretsFilename, lines.join("\n"));
+    open(password) {
+
+        if (this.isInit) {
+            if (this.legacyFilepath && fs.existsSync(this.legacyFilepath)) {
+                this.encryptedSecrets = legacyDecrypt(fs.readFileSync(this.legacyFilepath, 'utf8'), password)
+            }
+
+            this.key = generateKey()
+            this.addKeySlot(password)
+        } else {
+            this.key = this.getKey(password)
+        }
+
+        for (const v of this.vars) {
+            const encrypted = this.obj.encryptedSecrets?.[v.key];
+            const value = encrypted
+                ? JSON.parse(decrypt(encrypted, { key: this.key }))
+                : v.generator();
+            this.secretsMap.set(v.key, value);
+        }
+
+        this.isOpen = true
+
+        this.save()
+    }
+
+    getIsInit() {
+        return this.isInit;
+    }
+
+    getIsOpen() {
+        return this.isOpen;
+    }
+
+    getSecrets(json = true) {
+        return json ? Object.fromEntries(this.secretsMap) : this.secretsMap;
+    }
+
+    save() {
+        for (const v of this.vars) {
+            this.obj.encryptedSecrets[v.key] = encrypt(JSON.stringify(this.secretsMap.get(v.key)), { key: this.key });
+        }
+        fs.writeFileSync(this.filepath, JSON.stringify(this.obj));
+    }
 }

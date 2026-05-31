@@ -3,12 +3,12 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { loadSecrets, createOrUpdateSecretsFile, Secret } from "./secrets.js";
+import { Var, Secrets } from "./secrets.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export { Secret };
+export { Var };
 
 /**
  * @callback onMessage
@@ -18,7 +18,7 @@ export { Secret };
 
 /**
  * @callback onReturnSecrets
- * @param {JSON} secrets
+ * @param {map} secrets
  */
 
 /**
@@ -52,8 +52,9 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
 
 /**
  * Creates an Express server that handles password input and manages secrets.
- * @param {Array<Secret>} vars - An array of environment variable definitions.
- * @param {string} secretsFilename - The path to the secrets file.
+ * @param {Array<Var>} vars - An array of environment variable definitions.
+ * @param {string} filepath - The path to the secrets file.
+ * @param {string} legacyFilepath - The path to the secrets file.
  * @param {number} port - The port on which the server will listen.
  * @param {Function} generatePasswort - The function to generate a primary password of non is setup
  * @param {onReturnSecrets} onComplete - The function to run on complete.
@@ -61,12 +62,13 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
  * @param {onMessage} onMessage - The function to use for messages.
  * @param {string} healthCheckUrl - The health check url for launcher application to check against.
  */
-export function createLauncher(vars, secretsFilename, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl) {
-    if (!fs.existsSync(secretsFilename)) {
-        createOrUpdateSecretsFile(secretsFilename, generatePasswort(), {});
-    }
+export function createLauncher(vars, filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl) {
+    const secrets = new Secrets(filepath, vars, legacyFilepath)
 
-    var isLocked = true;
+    if (secrets.getIsInit()) {
+        const psw = generatePasswort()
+        secrets.open(psw)
+    }
 
     const app = express();
 
@@ -77,7 +79,7 @@ export function createLauncher(vars, secretsFilename, port, generatePasswort, on
     app.use("/public", express.static(path.join(__dirname, 'public')));
 
     app.get(/^(?!\/unlock|\/public).+/, (req, res) => {
-        if (isLocked) {
+        if (!secrets.getIsOpen()) {
             res.render('index');
         } else {
             res.render('starting', { healthCheckUrl });
@@ -89,34 +91,23 @@ export function createLauncher(vars, secretsFilename, port, generatePasswort, on
     });
 
     app.post('/unlock', (req, res) => {
-        if (!isLocked) {
+        if (secrets.getIsOpen()) {
             res.render('starting', { healthCheckUrl });
         } else {
             const password = req.body.password;
             onMessage(false, "Password received from Frontend")
 
             try {
-                const secrets = loadSecrets(secretsFilename, password);
-                var shouldSave = false;
-
-                vars.forEach(element => {
-                    if (!secrets[element.key]) {
-                        shouldSave = true;
-                        secrets[element.key] = element.generator();
-                    }
-                });
-
-                createOrUpdateSecretsFile(secretsFilename, password, secrets);
+                secrets.open(password)
 
                 onMessage(false, "Unlock successful")
-                onUnlock(secrets)
+                onUnlock(secrets.getSecrets())
 
                 closeServer(server, () => {
                     onMessage(false, "Successfully completed")
-                    onComplete(secrets);
+                    onComplete(secrets.getSecrets());
                 }, onMessage, 3)
 
-                isLocked = false;
 
                 res.render('starting', { healthCheckUrl });
 
