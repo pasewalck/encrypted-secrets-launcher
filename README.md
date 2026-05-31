@@ -11,28 +11,38 @@ import { createLauncher,Secret } from "encrypted-secrets-launcher";
 
 createLauncher(
     [
-        new Secret("DATABASE_KEY",() => generateSecretFunction())
-    ],"data/database-secrets.txt",3000,() => {
-        const password = generatePasswordFunction(40)
-        console.log(`Launcher initiated with new password: ${password}`)
-        return password;
-    },(secrets) => {
-        console.log("Starting main service ...")
-        const child = spawn('node', ['src/server.js'], {
-            env: {
-                ...process.env,
-                ...secrets
-            },
-            stdio: 'inherit'
-        });
-    },(secrets) => {
+        new Secret("DATABASE_KEY", () => generateSecretFunction())
+    ],
+    {
+        filepath: "data/database-secrets.txt",
+        legacyFilepath: "data/database-secrets.txt",
+        port: 3000,
+        generatePasswort: () => {
+            const password = generatePasswordFunction(40)
+            console.log(`Launcher initiated with new password: ${password}`)
+            return password;
+        },
+        onComplete: (secrets) => {
+            console.log("Starting main service ...")
+            const child = spawn('node', ['src/server.js'], {
+                env: {
+                    ...process.env,
+                    ...secrets
+                },
+                stdio: 'inherit'
+            });
+        },
+        onUnlock: (secrets) => {
 
-    },(isError,...message) => {
-        if(isError)
-            console.error(message.join(" "))
-        else
-            console.log(message.join(" "))
-    },new URL("http://localhost:3000/health")
+        },
+        onMessage: (isError, ...message) => {
+            if (isError)
+                console.error(message.join(" "))
+            else
+                console.log(message.join(" "))
+        },
+        healthCheckUrl: new URL("http://localhost:3000/health"),
+    }
 )
 
 ```

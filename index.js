@@ -53,16 +53,27 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
 /**
  * Creates an Express server that handles password input and manages secrets.
  * @param {Array<Var>} vars - An array of environment variable definitions.
- * @param {string} filepath - The path to the secrets file.
- * @param {string} legacyFilepath - The path to the secrets file.
- * @param {number} port - The port on which the server will listen.
- * @param {Function} generatePasswort - The function to generate a primary password of non is setup
- * @param {onReturnSecrets} onComplete - The function to run on complete.
- * @param {onReturnSecrets} onUnlock - The function to run on unlock (webserver will still be running).
- * @param {onMessage} onMessage - The function to use for messages.
- * @param {string} healthCheckUrl - The health check url for launcher application to check against.
+ * @param {Object} options - Options object.
+ * @param {string} options.filepath - The path to the secrets file.
+ * @param {string} options.legacyFilepath - The path to the legacy secrets file.
+ * @param {number} options.port - The port on which the server will listen.
+ * @param {Function} options.generatePasswort - The function to generate a primary password if none is setup.
+ * @param {onReturnSecrets} options.onComplete - The function to run on complete.
+ * @param {onReturnSecrets} options.onUnlock - The function to run on unlock (webserver will still be running).
+ * @param {onMessage} options.onMessage - The function to use for messages.
+ * @param {string} options.healthCheckUrl - The health check url for launcher application to check against.
  */
-export function createLauncher(vars, filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl) {
+export function createLauncher(vars, options) {
+    const {
+        filepath,
+        legacyFilepath,
+        port,
+        generatePasswort,
+        onComplete,
+        onUnlock,
+        onMessage,
+        healthCheckUrl,
+    } = options;
     const secrets = new Secrets(filepath, vars, legacyFilepath)
 
     if (secrets.getIsInit()) {

@@ -32,19 +32,29 @@ function runServer(secrets) {
 createLauncher(
     [
         new Var("DATABASE_KEY", () => generateToken())
-    ], "database-secrets.json", "database-secrets.txt", 3000, () => {
-        const password = generateToken(10)
-        console.log(`Launcher initiated with new password: ${password}`)
-        return password;
-    }, (secrets) => {
-        console.log("Starting main service ...")
-        runServer(secrets)
-    }, (secrets) => {
+    ],
+    {
+        filepath: "database-secrets.json",
+        legacyFilepath: "database-secrets.txt",
+        port: 3000,
+        generatePasswort: () => {
+            const password = generateToken(10)
+            console.log(`Launcher initiated with new password: ${password}`)
+            return password;
+        },
+        onComplete: (secrets) => {
+            console.log("Starting main service ...")
+            runServer(secrets)
+        },
+        onUnlock: (secrets) => {
 
-    }, (isError, ...message) => {
-        if (isError)
-            console.error(message.join(" "))
-        else
-            console.log(message.join(" "))
-    }, new URL("http://localhost:3000/health")
+        },
+        onMessage: (isError, ...message) => {
+            if (isError)
+                console.error(message.join(" "))
+            else
+                console.log(message.join(" "))
+        },
+        healthCheckUrl: new URL("http://localhost:3000/health"),
+    }
 )
