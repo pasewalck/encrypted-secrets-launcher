@@ -28,27 +28,27 @@ export { Var };
  * @param {number} waitSeconds - The time inseconds to wait before closing connection.
  */
 function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
-    if (waitSeconds <= 0) {
-        onMessage(false, 'Stopping Webserver');
-        server.close(
-            () => {
-                onMessage(false, 'Stopped Webserver');
-                onComplete();
-            },
-            (error) => {
-                if (error) {
-                    onMessage(true, 'Error stopping Webserver: ', error);
-                }
-                closeServer(server, onComplete, onMessage, 5);
-            }
-        );
-        server.closeAllConnections();
-    } else {
-        onMessage(false, 'Stopping Webserver in', waitSeconds, 'seconds');
-        setTimeout(() => {
-            closeServer(server, onComplete, onMessage);
-        }, 1000 * waitSeconds);
-    }
+	if (waitSeconds <= 0) {
+		onMessage(false, 'Stopping Webserver');
+		server.close(
+			() => {
+				onMessage(false, 'Stopped Webserver');
+				onComplete();
+			},
+			(error) => {
+				if (error) {
+					onMessage(true, 'Error stopping Webserver: ', error);
+				}
+				closeServer(server, onComplete, onMessage, 5);
+			}
+		);
+		server.closeAllConnections();
+	} else {
+		onMessage(false, 'Stopping Webserver in', waitSeconds, 'seconds');
+		setTimeout(() => {
+			closeServer(server, onComplete, onMessage);
+		}, 1000 * waitSeconds);
+	}
 }
 
 /**
@@ -65,87 +65,84 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
  * @param {string} options.healthCheckUrl - The health check url for launcher application to check against.
  */
 export function createLauncher(vars, options) {
-    const { filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl } =
-        options;
-    const secrets = new Secrets(filepath, vars, legacyFilepath);
+	const { filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl } =
+		options;
+	const secrets = new Secrets(filepath, vars, legacyFilepath);
 
-    if (secrets.getIsInit()) {
-        const psw = generatePasswort();
-        secrets.open(psw);
-    }
+	if (secrets.getIsInit()) {
+		const psw = generatePasswort();
+		secrets.open(psw);
+	}
 
-    const app = express();
-    let isRunning = false;
-    let server = null;
+	const app = express();
+	let isRunning = false;
+	let server = null;
 
-    app.set('view engine', 'ejs');
-    app.set('views', path.join(__dirname, '..', 'views'));
+	app.set('view engine', 'ejs');
+	app.set('views', path.join(__dirname, '..', 'views'));
 
-    app.use(express.urlencoded({ extended: true }));
-    app.use('/public', express.static(path.join(__dirname, '..', 'public')));
+	app.use(express.urlencoded({ extended: true }));
+	app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
-    app.get(/^(?!\/unlock|\/public).+/, (req, res) => {
-        if (!secrets.getIsOpen()) {
-            res.render('index');
-        } else {
-            res.render('starting', { healthCheckUrl });
-        }
-    });
+	app.get(/^(?!\/unlock|\/public).+/, (req, res) => {
+		if (!secrets.getIsOpen()) {
+			res.render('index');
+		} else {
+			res.render('starting', { healthCheckUrl });
+		}
+	});
 
-    app.get('/unlock', (req, res) => {
-        res.render('unlock');
-    });
+	app.get('/unlock', (req, res) => {
+		res.render('unlock');
+	});
 
-    app.post('/unlock', (req, res) => {
-        if (secrets.getIsOpen()) {
-            res.render('starting', { healthCheckUrl });
-        } else {
-            const password = req.body.password;
-            onMessage(false, 'Password received from Frontend');
+	app.post('/unlock', (req, res) => {
+		if (secrets.getIsOpen()) {
+			res.render('starting', { healthCheckUrl });
+		} else {
+			const password = req.body.password;
+			onMessage(false, 'Password received from Frontend');
 
-            try {
-                secrets.open(password);
+			try {
+				secrets.open(password);
 
-                onMessage(false, 'Unlock successful');
-                if (onUnlock)
-                    onUnlock(secrets.getSecrets());
+				onMessage(false, 'Unlock successful');
+				if (onUnlock) onUnlock(secrets.getSecrets());
 
-                if (isRunning)
-                    closeServer(
-                        server,
-                        () => {
-                            onMessage(false, 'Successfully completed');
-                            if (onComplete)
-                                onComplete(secrets.getSecrets());
-                        },
-                        onMessage,
-                        3
-                    );
-                else {
-                    onMessage(false, 'Successfully completed');
-                    if (onComplete)
-                        onComplete(secrets.getSecrets());
-                }
+				if (isRunning)
+					closeServer(
+						server,
+						() => {
+							onMessage(false, 'Successfully completed');
+							if (onComplete) onComplete(secrets.getSecrets());
+						},
+						onMessage,
+						3
+					);
+				else {
+					onMessage(false, 'Successfully completed');
+					if (onComplete) onComplete(secrets.getSecrets());
+				}
 
-                res.render('starting', { healthCheckUrl });
-            } catch (error) {
-                if (error.message.includes('bad decrypt')) {
-                    onMessage(false, 'Unlock failed. Bad Password.');
-                    res.status(500).render('error');
-                } else {
-                    onMessage(true, 'An unexpected Error occurred:', error);
-                    res.status(500).send('An unexpected Error occurred.');
-                }
-            }
-        }
-    });
+				res.render('starting', { healthCheckUrl });
+			} catch (error) {
+				if (error.message.includes('bad decrypt')) {
+					onMessage(false, 'Unlock failed. Bad Password.');
+					res.status(500).render('error');
+				} else {
+					onMessage(true, 'An unexpected Error occurred:', error);
+					res.status(500).send('An unexpected Error occurred.');
+				}
+			}
+		}
+	});
 
-    const runLauncherServer = () => {
-        server = app.listen(port, () => {
-            onMessage(false, 'Started Webserver');
-            isRunning = true;
-        });
-    };
+	const runLauncherServer = () => {
+		server = app.listen(port, () => {
+			onMessage(false, 'Started Webserver');
+			isRunning = true;
+		});
+	};
 
-    return { app, runLauncherServer };
+	return { app, runLauncherServer };
 }
