@@ -77,10 +77,12 @@ export class Secrets {
 			this.key = this.getKey(password);
 		}
 
-		for (const v of this.vars) {
-			const encrypted = this.obj.encryptedSecrets?.[v.key];
-			const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
-			this.secretsMap.set(v.key, value);
+		if (!this.needsUpgrade) {
+			for (const v of this.vars) {
+				const encrypted = this.obj.encryptedSecrets?.[v.key];
+				const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
+				this.secretsMap.set(v.key, value);
+			}
 		}
 
 		this.isOpen = true;
