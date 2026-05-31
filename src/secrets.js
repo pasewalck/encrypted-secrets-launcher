@@ -21,8 +21,8 @@ export class Secrets {
 		this.obj = null;
 		this.isOpen = false;
 		this.key = null;
-		this.isInit = !fs.existsSync(filepath) && !fs.existsSync(legacyFilepath);
-		this.needsUpgrade = fs.existsSync(legacyFilepath) && !fs.existsSync(filepath);
+		this.isInit = !fs.existsSync(filepath) && !(legacyFilepath && fs.existsSync(legacyFilepath));
+		this.needsUpgrade = legacyFilepath && fs.existsSync(legacyFilepath) && !fs.existsSync(filepath);
 		this.obj =
 			this.isInit || this.needsUpgrade
 				? {
