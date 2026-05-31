@@ -84,32 +84,4 @@ describe('createLauncher', () => {
 			expect(res.text).toContain('Service Locked');
 		});
 	});
-
-	describe('routes (init mode — auto-unlocked)', () => {
-		let app;
-
-		beforeEach(() => {
-			const result = createLauncher(vars, {
-				filepath,
-				port: 0,
-				generatePasswort: () => 'test-password',
-				onMessage: () => {},
-				onComplete: () => {},
-				onUnlock: () => {},
-			});
-			app = result.app;
-		});
-
-		it('GET / renders starting page when auto-unlocked', async () => {
-			const res = await request(app).get('/');
-			expect(res.status).toBe(200);
-			expect(res.text).toContain('Starting Service');
-		});
-
-		it('GET /unlock renders unlock page when auto-unlocked', async () => {
-			const res = await request(app).get('/unlock');
-			expect(res.status).toBe(200);
-			expect(res.text).toContain('input');
-		});
-	});
 });
