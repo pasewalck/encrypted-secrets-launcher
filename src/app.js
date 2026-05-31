@@ -63,7 +63,7 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
  * @param {onMessage} options.onMessage - The function to use for messages.
  * @param {string} options.healthCheckUrl - The health check url for launcher application to check against.
  */
-export function createLauncher(vars, options) {
+export function createLauncher(vars, options, close) {
     const {
         filepath,
         legacyFilepath,
@@ -82,6 +82,8 @@ export function createLauncher(vars, options) {
     }
 
     const app = express();
+    let isRunning = false
+    let server = null
 
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, '..', 'views'));
@@ -114,11 +116,15 @@ export function createLauncher(vars, options) {
                 onMessage(false, "Unlock successful")
                 onUnlock(secrets.getSecrets())
 
-                closeServer(server, () => {
+                if (isRunning)
+                    closeServer(server, () => {
+                        onMessage(false, "Successfully completed")
+                        onComplete(secrets.getSecrets());
+                    }, onMessage, 3)
+                else {
                     onMessage(false, "Successfully completed")
                     onComplete(secrets.getSecrets());
-                }, onMessage, 3)
-
+                }
 
                 res.render('starting', { healthCheckUrl });
 
@@ -134,7 +140,12 @@ export function createLauncher(vars, options) {
         }
     });
 
-    const server = app.listen(port, () => {
-        onMessage(false, "Started Webserver")
-    });
+    const runLauncherServer = () => {
+        server = app.listen(port, () => {
+            onMessage(false, "Started Webserver")
+            isRunning = true
+        });
+    }
+
+    return { app, runLauncherServer };
 }

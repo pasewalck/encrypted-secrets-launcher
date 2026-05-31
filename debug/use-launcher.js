@@ -1,4 +1,4 @@
-import { createLauncher, Var } from "../src/index.js";
+import { createLauncher, Var } from "../src/app.js";
 import { randomBytes } from "node:crypto";
 import express from "express";
 
@@ -29,7 +29,7 @@ function runServer(secrets) {
     });
 }
 
-createLauncher(
+const { app, runLauncherServer } = createLauncher(
     [
         new Var("DATABASE_KEY", () => generateToken())
     ],
@@ -58,3 +58,5 @@ createLauncher(
         healthCheckUrl: new URL("http://localhost:3000/health"),
     }
 )
+
+runLauncherServer()
