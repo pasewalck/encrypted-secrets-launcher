@@ -6,7 +6,7 @@
   "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
-    "test:use-launcher": "nodemon tests/use-launcher.js"
+    "debug:use-launcher": "nodemon debug/use-launcher.js"
   },
   "description": "",
   "devDependencies": {
