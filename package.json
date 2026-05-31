@@ -1,44 +1,44 @@
 {
-    "name": "encrypted-secret-launcher",
-    "version": "1.0.0",
-    "main": "app.js",
-    "author": "",
-    "license": "GPL-3.0-only",
-    "type": "module",
-    "scripts": {
-        "debug:use-launcher": "nodemon debug/use-launcher.js",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "lint": "eslint . --fix",
-        "format": "prettier --write .",
-        "test:coverage": "vitest run --coverage",
-        "prepare": "husky"
-    },
-    "description": "",
-    "lint-staged": {
-        "*.js": [
-            "npm run format",
-            "npm run lint"
-        ]
-    },
-    "devDependencies": {
-        "@eslint/js": "^10.0.1",
-        "eslint": "^10.4.1",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-prettier": "^5.5.6",
-        "globals": "^17.6.0",
-        "husky": "^9.1.7",
-        "lint-staged": "^17.0.6",
-        "nodemon": "^3.1.7",
-        "prettier": "^3.8.3",
-        "supertest": "^7.2.2",
-        "vitest": "^4.1.7"
-    },
-    "dependencies": {
-        "ejs": "^3.1.10",
-        "express": "^5.1.0",
-        "fs": "^0.0.1-security",
-        "path": "^0.12.7",
-        "url": "^0.11.4"
-    }
+	"name": "encrypted-secret-launcher",
+	"version": "1.0.0",
+	"main": "app.js",
+	"author": "",
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"scripts": {
+		"debug:use-launcher": "nodemon debug/use-launcher.js",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "eslint . --fix",
+		"format": "prettier --write .",
+		"test:coverage": "vitest run --coverage",
+		"prepare": "husky"
+	},
+	"description": "",
+	"lint-staged": {
+		"*.js": [
+			"npm run format",
+			"npm run lint"
+		]
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.4.1",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.6",
+		"globals": "^17.6.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.6",
+		"nodemon": "^3.1.7",
+		"prettier": "^3.8.3",
+		"supertest": "^7.2.2",
+		"vitest": "^4.1.7"
+	},
+	"dependencies": {
+		"ejs": "^3.1.10",
+		"express": "^5.1.0",
+		"fs": "^0.0.1-security",
+		"path": "^0.12.7",
+		"url": "^0.11.4"
+	}
 }
