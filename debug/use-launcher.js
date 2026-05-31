@@ -1,4 +1,4 @@
-import { createLauncher, Var } from "../index.js";
+import { createLauncher, Var } from "../src/index.js";
 import { randomBytes } from "node:crypto";
 import express from "express";
 
