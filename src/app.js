@@ -65,8 +65,26 @@ function closeServer(server, onComplete, onMessage, waitSeconds = 0) {
  * @param {string} options.healthCheckUrl - The health check url for launcher application to check against.
  */
 export function createLauncher(vars, options) {
+	if (!options) {
+		throw new Error('options object is required');
+	}
+
 	const { filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl } =
 		options;
+
+	if (!filepath) {
+		throw new Error('options.filepath is required');
+	}
+	if (port == null) {
+		throw new Error('options.port is required');
+	}
+	if (!generatePasswort) {
+		throw new Error('options.generatePasswort is required');
+	}
+	if (!onMessage) {
+		throw new Error('options.onMessage is required');
+	}
+
 	const secrets = new Secrets(filepath, vars, legacyFilepath);
 
 	if (secrets.getIsInit()) {
