@@ -47,7 +47,7 @@ export class Secrets {
 					!error.message.includes('bad decrypt') &&
 					!error.message.includes('Unsupported state or unable to authenticate data')
 				) {
-					throw new UnlockError();
+					throw error;
 				}
 			}
 		}
