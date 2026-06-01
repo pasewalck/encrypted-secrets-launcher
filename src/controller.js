@@ -1,16 +1,5 @@
+import { BadPasswordError } from './errors/bad-password.error';
 import { closeServer } from './util/close-server';
-
-export class BadPasswordError extends Error {
-	constructor() {
-		super('Bad password');
-	}
-}
-
-class UnlockError extends Error {
-	constructor(message) {
-		super(message);
-	}
-}
 
 class SecretService {
 	constructor(secrets, options) {
@@ -33,17 +22,7 @@ class SecretService {
 	unlock(password) {
 		this.onMessage(false, 'Password received from Frontend');
 
-		try {
-			this.secrets.open(password);
-		} catch (error) {
-			if (
-				error.message.includes('bad decrypt') ||
-				error.message.includes('Unsupported state or unable to authenticate data')
-			) {
-				throw new BadPasswordError();
-			}
-			throw new UnlockError(error.message);
-		}
+		this.secrets.open(password);
 
 		this.onMessage(false, 'Unlock successful');
 		if (this.onUnlock) this.onUnlock(this.secrets.getSecrets());
