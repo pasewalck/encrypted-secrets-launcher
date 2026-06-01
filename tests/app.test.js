@@ -83,5 +83,22 @@ describe('createLauncher', () => {
 			expect(res.status).toBe(200);
 			expect(res.text).toContain('Service Locked');
 		});
+
+		it('GET /api/status returns locked state as JSON', async () => {
+			const res = await request(app).get('/api/status');
+			expect(res.status).toBe(200);
+			expect(res.body).toEqual({ status: 'locked' });
+		});
+
+		it('POST /api/unlock with correct password returns unlocked state', async () => {
+			const res = await request(app).post('/api/unlock').send({ password: 'test-password' });
+			expect(res.status).toBe(200);
+			expect(res.body).toEqual({ status: 'unlocked' });
+		});
+
+		it('POST /api/unlock with wrong password returns 401', async () => {
+			const res = await request(app).post('/api/unlock').send({ password: 'wrong-password' });
+			expect(res.status).toBe(401);
+		});
 	});
 });

@@ -102,5 +102,29 @@ export function createController(secrets, options) {
 		}
 	}
 
-	return { handleCatchAll, handleUnlockGet, handleUnlockPost };
+	function handleApiStatus(req, res) {
+		res.json({ status: service.getIsOpen() ? 'unlocked' : 'locked' });
+	}
+
+	function handleApiUnlock(req, res) {
+		if (service.getIsOpen()) {
+			res.json({ status: 'unlocked' });
+			return;
+		}
+
+		try {
+			service.unlock(req.body.password);
+			res.json({ status: 'unlocked' });
+		} catch (error) {
+			if (error instanceof BadPasswordError || error.message === 'Bad password') {
+				onMessage(false, 'Unlock failed. Bad Password.');
+				res.status(401).json({ error: 'Bad password' });
+			} else {
+				onMessage(true, 'An unexpected Error occurred:', error);
+				res.status(500).json({ error: 'An unexpected error occurred' });
+			}
+		}
+	}
+
+	return { handleCatchAll, handleUnlockGet, handleUnlockPost, handleApiStatus, handleApiUnlock };
 }
