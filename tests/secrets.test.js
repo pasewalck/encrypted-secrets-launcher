@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
 import { Var, Secrets } from '../src/secrets.js';
-import { decrypt } from '../src/crypt.js';
+import { decrypt } from '../src/util/crypt.js';
 
 function createTempDir() {
 	return fs.mkdtempSync(path.join(os.tmpdir(), 'secrets-test-'));

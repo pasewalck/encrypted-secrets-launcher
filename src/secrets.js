@@ -1,5 +1,7 @@
 import fs from 'fs';
-import { decrypt, encrypt, generateKey, legacyDecrypt } from './crypt.js';
+import { decrypt, encrypt, generateKey, legacyDecrypt } from './util/crypt.js';
+import { BadPasswordError } from './errors/bad-password.error.js';
+import { UnlockError } from './errors/unlock.error.js';
 
 export class Var {
 	/**
@@ -45,13 +47,13 @@ export class Secrets {
 					!error.message.includes('bad decrypt') &&
 					!error.message.includes('Unsupported state or unable to authenticate data')
 				) {
-					throw error;
+					throw new UnlockError();
 				}
 			}
 		}
 
 		if (key == null) {
-			throw new Error('bad decrypt');
+			throw new BadPasswordError();
 		}
 
 		return key;
@@ -78,12 +80,21 @@ export class Secrets {
 			this.key = this.getKey(password);
 		}
 
-		if (!this.needsUpgrade) {
-			for (const v of this.vars) {
-				const encrypted = this.obj.encryptedSecrets?.[v.key];
-				const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
-				this.secretsMap.set(v.key, value);
+		try {
+			if (!this.needsUpgrade) {
+				for (const v of this.vars) {
+					const encrypted = this.obj.encryptedSecrets?.[v.key];
+					const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
+					this.secretsMap.set(v.key, value);
+				}
 			}
+		} catch (error) {
+			if (
+				!error.message.includes('bad decrypt') &&
+				!error.message.includes('Unsupported state or unable to authenticate data')
+			) {
+				throw new UnlockError();
+			} else throw error;
 		}
 
 		this.isOpen = true;

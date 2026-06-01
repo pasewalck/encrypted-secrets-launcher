@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import crypto from 'crypto';
-import { encrypt, decrypt, generateKey, deriveKeyFromPassword } from '../src/crypt.js';
+import { encrypt, decrypt, generateKey, deriveKeyFromPassword } from '../src/util/crypt.js';
 
 describe('encrypt / decrypt', () => {
 	const message = 'hello-secret-world';
