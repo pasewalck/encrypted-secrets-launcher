@@ -1,5 +1,5 @@
-import { BadPasswordError } from './errors/bad-password.error';
-import { closeServer } from './util/close-server';
+import { BadPasswordError } from './errors/bad-password.error.js';
+import { closeServer } from './util/close-server.js';
 
 class SecretService {
 	constructor(secrets, options) {
