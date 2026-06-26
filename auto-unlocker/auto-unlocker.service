@@ -1,0 +1,7 @@
+[Unit]
+Description=Init Secret Launcher Auto-Unlocker
+Documentation=https://github.com/anomalyco/init-secret-launcher
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/init-secret-launcher-unlock.sh --conf-dir /etc/init-secret-launcher/conf.d
