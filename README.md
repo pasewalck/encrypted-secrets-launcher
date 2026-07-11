@@ -47,6 +47,14 @@ createLauncher(
 
 ```
 
+## Auto Unlocking
+
+This app implements an REST API. It includes route
+- GET `/api/status`: Provides status
+- POST `/api/unlock`: Takes in {password: "secret"} and unlocks the service.
+
+Under https://github.com/pasewalck/encrypted-secrets-launcher/tree/main/auto-unlocker an example timed service is provided that can be deployed on a different server and setup to unlock the launcher. See https://github.com/pasewalck/encrypted-secrets-launcher/tree/main/auto-unlocker/README.md for details.
+
 ## License and Warranty
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
