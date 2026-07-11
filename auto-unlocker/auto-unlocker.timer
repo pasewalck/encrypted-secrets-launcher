@@ -3,7 +3,6 @@ Description=Periodic auto-unlocker check
 Documentation=https://github.com/anomalyco/init-secret-launcher
 
 [Timer]
-OnBootSec=10
 OnUnitActiveSec=30
 Persistent=true
 
