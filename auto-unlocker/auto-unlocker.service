@@ -1,6 +1,6 @@
 [Unit]
 Description=Init Secret Launcher Auto-Unlocker
-Documentation=https://github.com/pasewalck/init-secret-launcher
+Documentation=https://github.com/pasewalck/encrypted-secrets-launcher
 Requires=network-online.target
 After=network-online.target
 
