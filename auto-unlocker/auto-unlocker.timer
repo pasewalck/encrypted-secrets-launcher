@@ -1,6 +1,6 @@
 [Unit]
 Description=Periodic auto-unlocker check
-Documentation=https://github.com/anomalyco/init-secret-launcher
+Documentation=https://github.com/pasewalck/init-secret-launcher
 
 [Timer]
 OnUnitActiveSec=30
