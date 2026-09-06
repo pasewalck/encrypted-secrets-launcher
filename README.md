@@ -41,7 +41,7 @@ createLauncher(
             else
                 console.log(message.join(" "))
         },
-        healthCheckUrl: new URL("http://localhost:3000/health"),
+        healthCheckUrl: "http://localhost:3000/health",
     }
 )
 
