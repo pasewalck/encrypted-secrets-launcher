@@ -12,17 +12,33 @@ const __dirname = dirname(__filename);
 export { Var };
 
 /**
+ * @typedef {(secrets: Record<string, any>) => void} onReturnSecrets
+ * @typedef {(isError: boolean, ...message: any[]) => void} onMessage
+ */
+
+/**
+ * @typedef {Object} LauncherOptions
+ * @property {string} filepath - The path to the secrets file.
+ * @property {string} [legacyFilepath] - The path to the legacy secrets file.
+ * @property {number} port - The port on which the server will listen.
+ * @property {() => string} generatePasswort - The function to generate a primary password if none is setup.
+ * @property {onReturnSecrets} [onComplete] - The function to run on complete.
+ * @property {onReturnSecrets} [onUnlock] - The function to run on unlock (webserver will still be running).
+ * @property {onMessage} onMessage - The function to use for messages.
+ * @property {string} [healthCheckUrl] - The health check url for launcher application to check against.
+ */
+
+/**
+ * @typedef {Object} LauncherResult
+ * @property {import('express').Express} app - The Express application.
+ * @property {() => void} runLauncherServer - Starts the launcher server.
+ */
+
+/**
  * Creates an Express server that handles password input and manages secrets.
- * @param {Array<Var>} vars - An array of environment variable definitions.
- * @param {Object} options - Options object.
- * @param {string} options.filepath - The path to the secrets file.
- * @param {string} options.legacyFilepath - The path to the legacy secrets file.
- * @param {number} options.port - The port on which the server will listen.
- * @param {Function} options.generatePasswort - The function to generate a primary password if none is setup.
- * @param {onReturnSecrets} options.onComplete - The function to run on complete.
- * @param {onReturnSecrets} options.onUnlock - The function to run on unlock (webserver will still be running).
- * @param {onMessage} options.onMessage - The function to use for messages.
- * @param {string} options.healthCheckUrl - The health check url for launcher application to check against.
+ * @param {Array<Var<any>>} vars - An array of environment variable definitions.
+ * @param {LauncherOptions} options - Options object.
+ * @returns {LauncherResult}
  */
 export function createLauncher(vars, options) {
 	if (!options) {

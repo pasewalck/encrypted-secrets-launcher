@@ -7,11 +7,11 @@ This project was designed for use in conjunction with the project [Aktivistio Ac
 ## Example Usage
 
 ```
-import { createLauncher,Secret } from "encrypted-secrets-launcher";
+import { createLauncher, Var } from "encrypted-secrets-launcher";
 
 createLauncher(
     [
-        new Secret("DATABASE_KEY", () => generateSecretFunction())
+        new Var("DATABASE_KEY", () => generateSecretFunction())
     ],
     {
         filepath: "data/database-secrets.txt",
@@ -50,6 +50,7 @@ createLauncher(
 ## Auto Unlocking
 
 This app implements an REST API. It includes route
+
 - GET `/api/status`: Provides status
 - POST `/api/unlock`: Takes in {password: "secret"} and unlocks the service.
 

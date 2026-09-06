@@ -2,6 +2,7 @@
 	"name": "encrypted-secret-launcher",
 	"version": "1.1.4",
 	"main": "src/app.js",
+	"types": "./types/app.d.ts",
 	"author": "",
 	"license": "GPL-3.0-only",
 	"type": "module",
@@ -11,6 +12,7 @@
 		"test:watch": "vitest",
 		"lint": "eslint . --fix",
 		"format": "prettier --write .",
+		"types": "tsc",
 		"test:coverage": "vitest run --coverage",
 		"prepare": "husky"
 	},
@@ -23,6 +25,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@types/express": "^5.0.6",
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.6",
@@ -32,6 +35,7 @@
 		"nodemon": "^3.1.7",
 		"prettier": "^3.8.3",
 		"supertest": "^7.2.2",
+		"typescript": "^5.6.3",
 		"vitest": "^4.1.7"
 	},
 	"dependencies": {
