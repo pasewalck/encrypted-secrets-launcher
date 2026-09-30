@@ -121,7 +121,6 @@ export class Secrets {
 		try {
 			for (const v of this.vars) {
 				const encrypted = this.encryptedSecrets?.[v.key];
-				console.log(v, encrypted);
 				const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
 				this.secretsMap.set(v.key, value);
 			}
