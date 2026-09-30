@@ -80,7 +80,7 @@ export class Secrets {
 
 	removeKeySlot(idIndex) {
 		const idIndecies = this.keySlots.map((v) => v.idIndex);
-		const realIndex = idIndecies.idIndexOf(idIndex);
+		const realIndex = idIndecies.indexOf(idIndex);
 		if (this.keySlots.length == 1) throw new KeySlotRemoveError();
 		this.keySlots.remove(realIndex);
 	}
