@@ -26,13 +26,13 @@ export class KeySlot {
 }
 
 export class Secrets {
-	constructor(filepath, vars, legacyFilepath = null) {
+	constructor(filepath, vars, legacyFilepath = null, doBackups = true) {
 		if (legacyFilepath) {
 			throw new Error(
 				'This version of the launcher does not support loading legacy files! Please use a launcher version below 1.2.0.'
 			);
 		}
-
+		this.doBackups = doBackups;
 		this.filepath = filepath;
 		this.vars = vars;
 		this.secretsMap = new Map();
@@ -121,6 +121,7 @@ export class Secrets {
 		try {
 			for (const v of this.vars) {
 				const encrypted = this.encryptedSecrets?.[v.key];
+				console.log(v, encrypted);
 				const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
 				this.secretsMap.set(v.key, value);
 			}
@@ -164,6 +165,7 @@ export class Secrets {
 					key: this.key,
 				});
 		}
+		if (this.doBackups && fs.existsSync(this.filepath)) fs.copyFileSync(this.filepath, this.filepath + '.bkp');
 		fs.writeFileSync(
 			this.filepath,
 			JSON.stringify({

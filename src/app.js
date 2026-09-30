@@ -18,6 +18,7 @@ export { Var };
  * @param {string} options.filepath - The path to the secrets file.
  * @param {string} options.legacyFilepath - The path to the legacy secrets file.
  * @param {number} options.port - The port on which the server will listen.
+ * @param {boolean} options.backup - Should launcher data file be backed up before write?
  * @param {Function} options.generatePasswort - The function to generate a primary password if none is setup.
  * @param {onReturnSecrets} options.onComplete - The function to run on complete.
  * @param {onReturnSecrets} options.onUnlock - The function to run on unlock (webserver will still be running).
@@ -29,8 +30,17 @@ export function createLauncher(vars, options) {
 		throw new Error('options object is required');
 	}
 
-	const { filepath, legacyFilepath, port, generatePasswort, onComplete, onUnlock, onMessage, healthCheckUrl } =
-		options;
+	const {
+		filepath,
+		legacyFilepath,
+		port,
+		generatePasswort,
+		onComplete,
+		onUnlock,
+		onMessage,
+		healthCheckUrl,
+		backup,
+	} = options;
 
 	if (!filepath) {
 		throw new Error('options.filepath is required');
@@ -45,7 +55,7 @@ export function createLauncher(vars, options) {
 		throw new Error('options.onMessage is required');
 	}
 
-	const secrets = new Secrets(filepath, vars, legacyFilepath);
+	const secrets = new Secrets(filepath, vars, legacyFilepath, backup);
 
 	if (secrets.getIsInit()) {
 		const psw = generatePasswort();

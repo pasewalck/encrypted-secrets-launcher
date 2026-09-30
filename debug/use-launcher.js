@@ -32,7 +32,6 @@ function runServer(secrets) {
 
 const { runLauncherServer } = createLauncher([new Var('DATABASE_KEY', () => generateToken())], {
 	filepath: 'database-secrets.json',
-	legacyFilepath: 'database-secrets.txt',
 	port: 3000,
 	generatePasswort: () => {
 		const password = generateToken(10);
