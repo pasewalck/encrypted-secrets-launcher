@@ -2,8 +2,7 @@ import fs from 'fs';
 import { decrypt, encrypt, generateKey } from './util/crypt.js';
 import { BadPasswordError } from './errors/bad-password.error.js';
 import { UnlockError } from './errors/unlock.error.js';
-import { greekLetterNames } from './util/greek-letters.js';
-import { capitalize } from './util/strings.js';
+import { indexToGreekLetterName } from './util/greek-letters.js';
 import { KeySlotRemoveError } from './errors/keyslot-remove.error.js';
 
 export class Var {
@@ -54,7 +53,7 @@ export class Secrets {
 				case 'legacy':
 					this.encryptedSecrets = data.encryptedSecrets;
 					this.keySlots = data.keySlots.map(
-						(keySlot, idIndex) => new KeySlot(capitalize(greekLetterNames[idIndex]), idIndex, keySlot)
+						(keySlot, idIndex) => new KeySlot(indexToGreekLetterName(idIndex), idIndex, keySlot)
 					);
 					break;
 				default:
@@ -70,7 +69,7 @@ export class Secrets {
 		const lastIdIndex = Math.max(0, ...idIndecies);
 		this.keySlots.push(
 			new KeySlot(
-				name ? name : capitalize(greekLetterNames[lastIdIndex + 1]),
+				name ? name : indexToGreekLetterName(lastIdIndex + 1),
 				lastIdIndex + 1,
 				encrypt(key, { password })
 			)

@@ -1,3 +1,5 @@
+import { capitalize } from './strings';
+
 export const greekLetterNames = [
 	'alpha',
 	'beta',
@@ -24,3 +26,7 @@ export const greekLetterNames = [
 	'psi',
 	'omega',
 ];
+
+export function indexToGreekLetterName(index) {
+	return capitalize(greekLetterNames[index % greekLetterNames.length]);
+}
