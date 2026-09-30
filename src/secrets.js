@@ -4,6 +4,7 @@ import { BadPasswordError } from './errors/bad-password.error.js';
 import { UnlockError } from './errors/unlock.error.js';
 import { greekLetterNames } from './util/greek-letters.js';
 import { capitalize } from './util/strings.js';
+import { KeySlotRemoveError } from './errors/keyslot-remove.error.js';
 
 export class Var {
 	/**
@@ -62,14 +63,16 @@ export class Secrets {
 		}
 	}
 
-	addKeySlot(password, name = undefined) {
+	addKeySlot(password, name = undefined, currentPassword = undefined) {
+		const key = this.isOpen ? this.key : this.getKey(currentPassword);
+
 		const idIndecies = this.keySlots.map((v) => v.idIndex);
 		const lastIdIndex = Math.max(0, ...idIndecies);
 		this.keySlots.push(
 			new KeySlot(
 				name ? name : capitalize(greekLetterNames[lastIdIndex + 1]),
 				lastIdIndex + 1,
-				encrypt(this.key, { password })
+				encrypt(key, { password })
 			)
 		);
 		return true;
@@ -78,14 +81,14 @@ export class Secrets {
 	removeKeySlot(idIndex) {
 		const idIndecies = this.keySlots.map((v) => v.idIndex);
 		const realIndex = idIndecies.idIndexOf(idIndex);
-		if (this.keySlots.length > 1) {
-			this.keySlots.remove(realIndex);
-			return true;
-		} else return false;
+		if (this.keySlots.length == 1) throw new KeySlotRemoveError();
+		this.keySlots.remove(realIndex);
 	}
 
 	getKey(password) {
 		let key;
+
+		if (password == undefined) throw new BadPasswordError();
 
 		for (const keySlot of this.keySlots) {
 			try {
