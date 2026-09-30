@@ -67,7 +67,7 @@ describe('Secrets', () => {
 			s.open('test-password');
 
 			expect(s.getIsOpen()).toBe(true);
-			expect(s.obj.keySlots).toHaveLength(1);
+			expect(s.keySlots).toHaveLength(1);
 		});
 
 		it('populates secrets from generators', () => {
@@ -120,28 +120,15 @@ describe('Secrets', () => {
 		});
 	});
 
-	describe('open with legacy file', () => {
+	describe('legacy file handle', () => {
 		let legacyFilepath;
 
-		beforeEach(() => {
+		it('error on open', () => {
 			legacyFilepath = path.join(tmpDir, 'legacy-secrets.txt');
 			const legacyHex = createLegacyHex('legacy-pass', { DB_PASSWORD: 'legacy-db-pass' });
 			fs.writeFileSync(legacyFilepath, legacyHex);
 
-			const s = new Secrets(filepath, vars, legacyFilepath);
-			s.open('legacy-pass');
-			s.save();
-		});
-
-		it('upgrades legacy to new format', () => {
-			expect(fs.existsSync(filepath)).toBe(true);
-
-			const s2 = new Secrets(filepath, vars, legacyFilepath);
-			expect(s2.getIsInit()).toBe(false);
-			expect(s2.needsUpgrade).toBe(false);
-			s2.open('legacy-pass');
-			expect(s2.getIsOpen()).toBe(true);
-			expect(s2.getSecrets().DB_PASSWORD).toBe('legacy-db-pass');
+			expect(() => new Secrets(filepath, vars, legacyFilepath)).toThrow();
 		});
 	});
 

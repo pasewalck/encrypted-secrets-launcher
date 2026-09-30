@@ -50,6 +50,7 @@ createLauncher(
 ## Auto Unlocking
 
 This app implements an REST API. It includes route
+
 - GET `/api/status`: Provides status
 - POST `/api/unlock`: Takes in {password: "secret"} and unlocks the service.
 

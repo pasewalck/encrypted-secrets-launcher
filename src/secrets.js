@@ -1,7 +1,9 @@
 import fs from 'fs';
-import { decrypt, encrypt, generateKey, legacyDecrypt } from './util/crypt.js';
+import { decrypt, encrypt, generateKey } from './util/crypt.js';
 import { BadPasswordError } from './errors/bad-password.error.js';
 import { UnlockError } from './errors/unlock.error.js';
+import { greekLetterNames } from './util/greek-letters.js';
+import { capitalize } from './util/strings.js';
 
 export class Var {
 	/**
@@ -14,33 +16,80 @@ export class Var {
 	}
 }
 
+export class KeySlot {
+	constructor(name, idIndex, encryptedKey) {
+		this.name = name;
+		this.encryptedKey = encryptedKey;
+		this.idIndex = idIndex;
+	}
+}
+
 export class Secrets {
 	constructor(filepath, vars, legacyFilepath = null) {
+		if (legacyFilepath) {
+			throw new Error(
+				'This version of the launcher does not support loading legacy files! Please use a launcher version below 1.2.0.'
+			);
+		}
+
 		this.filepath = filepath;
-		this.legacyFilepath = legacyFilepath;
 		this.vars = vars;
 		this.secretsMap = new Map();
-		this.obj = null;
+		this.keySlots = [];
+		this.encryptedSecrets = {};
 		this.isOpen = false;
 		this.key = null;
-		this.isInit = !fs.existsSync(filepath) && !(legacyFilepath && fs.existsSync(legacyFilepath));
-		this.needsUpgrade = legacyFilepath && fs.existsSync(legacyFilepath) && !fs.existsSync(filepath);
-		this.obj =
-			this.isInit || this.needsUpgrade
-				? { encryptedSecrets: {}, keySlots: [] }
-				: JSON.parse(fs.readFileSync(filepath, 'utf8'));
+		this.isInit = !fs.existsSync(filepath);
+		if (!this.isInit) {
+			const data = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+			const v = data.v || 'legacy';
+			switch (v) {
+				case '1.2.0':
+					this.encryptedSecrets = data.encryptedSecrets;
+					this.keySlots = data.keySlots.map(
+						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey)
+					);
+					break;
+				case 'legacy':
+					this.encryptedSecrets = data.encryptedSecrets;
+					this.keySlots = data.keySlots.map(
+						(keySlot, idIndex) => new KeySlot(capitalize(greekLetterNames[idIndex]), idIndex, keySlot)
+					);
+					break;
+				default:
+					throw new Error('Datafile has invalid Version. Please make sure you are using a valid file.');
+			}
+		}
 	}
 
-	addKeySlot(password) {
-		this.obj.keySlots.push(encrypt(this.key, { password }));
+	addKeySlot(password, name = undefined) {
+		const idIndecies = this.keySlots.map((v) => v.idIndex);
+		const lastIdIndex = Math.max(0, ...idIndecies);
+		this.keySlots.push(
+			new KeySlot(
+				name ? name : capitalize(greekLetterNames[lastIdIndex + 1]),
+				lastIdIndex + 1,
+				encrypt(this.key, { password })
+			)
+		);
+		return true;
+	}
+
+	removeKeySlot(idIndex) {
+		const idIndecies = this.keySlots.map((v) => v.idIndex);
+		const realIndex = idIndecies.idIndexOf(idIndex);
+		if (this.keySlots.length > 1) {
+			this.keySlots.remove(realIndex);
+			return true;
+		} else return false;
 	}
 
 	getKey(password) {
 		let key;
 
-		for (const keySlot of this.obj.keySlots) {
+		for (const keySlot of this.keySlots) {
 			try {
-				key = decrypt(keySlot, { password });
+				key = decrypt(keySlot.encryptedKey, { password });
 				if (key) break;
 			} catch (error) {
 				if (
@@ -60,20 +109,7 @@ export class Secrets {
 	}
 
 	open(password) {
-		if (this.needsUpgrade) {
-			if (this.legacyFilepath && fs.existsSync(this.legacyFilepath)) {
-				const legacySecretsObj = JSON.parse(
-					legacyDecrypt(fs.readFileSync(this.legacyFilepath, 'utf8'), password)
-				);
-				for (const v of this.vars) {
-					const value = legacySecretsObj?.[v.key];
-					if (value) this.secretsMap.set(v.key, value);
-					else this.secretsMap.set(v.key, v.generator());
-				}
-			}
-		}
-
-		if (this.isInit || this.needsUpgrade) {
+		if (this.isInit) {
 			this.key = generateKey();
 			this.addKeySlot(password);
 		} else {
@@ -81,12 +117,10 @@ export class Secrets {
 		}
 
 		try {
-			if (!this.needsUpgrade) {
-				for (const v of this.vars) {
-					const encrypted = this.obj.encryptedSecrets?.[v.key];
-					const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
-					this.secretsMap.set(v.key, value);
-				}
+			for (const v of this.vars) {
+				const encrypted = this.encryptedSecrets?.[v.key];
+				const value = encrypted ? JSON.parse(decrypt(encrypted, { key: this.key })) : v.generator();
+				this.secretsMap.set(v.key, value);
 			}
 		} catch (error) {
 			if (
@@ -102,7 +136,6 @@ export class Secrets {
 		this.save();
 
 		this.isInit = false;
-		this.needsUpgrade = false;
 	}
 
 	getIsInit() {
@@ -125,10 +158,17 @@ export class Secrets {
 	save() {
 		for (const v of this.vars) {
 			if (this.secretsMap.has(v.key))
-				this.obj.encryptedSecrets[v.key] = encrypt(JSON.stringify(this.secretsMap.get(v.key)), {
+				this.encryptedSecrets[v.key] = encrypt(JSON.stringify(this.secretsMap.get(v.key)), {
 					key: this.key,
 				});
 		}
-		fs.writeFileSync(this.filepath, JSON.stringify(this.obj));
+		fs.writeFileSync(
+			this.filepath,
+			JSON.stringify({
+				v: '1.2.0',
+				encryptedSecrets: this.encryptedSecrets,
+				keySlots: this.keySlots,
+			})
+		);
 	}
 }
