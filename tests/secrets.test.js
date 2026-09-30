@@ -149,6 +149,25 @@ describe('Secrets', () => {
 		});
 	});
 
+	describe('handles adding and removing keyslots', () => {
+		it('adds a key slot successfully', () => {
+			const s = new Secrets(filepath, vars);
+			s.open('test');
+			s.addKeySlot('test1');
+			const slots = s.keySlots;
+			expect(slots.length).toEqual(2);
+		});
+
+		it('it removes a keyslot successfully', () => {
+			const s = new Secrets(filepath, vars);
+			s.open('test');
+			s.addKeySlot('test1');
+			s.removeKeySlot(1);
+			const slots = s.keySlots;
+			expect(slots.length).toEqual(1);
+		});
+	});
+
 	describe('save', () => {
 		it('persists encrypted secrets to file', () => {
 			const s = new Secrets(filepath, vars);
