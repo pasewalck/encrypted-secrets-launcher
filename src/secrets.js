@@ -64,7 +64,7 @@ export class Secrets {
 	}
 
 	addKeySlot(password, name = undefined, currentPassword = undefined) {
-		const key = this.isOpen ? this.key : this.getKey(currentPassword);
+		const key = this.key ? this.key : this.getKey(currentPassword);
 
 		const idIndecies = this.keySlots.map((v) => v.idIndex);
 		const lastIdIndex = Math.max(0, ...idIndecies);
@@ -87,7 +87,6 @@ export class Secrets {
 
 	getKey(password) {
 		let key;
-
 		if (password == undefined) throw new BadPasswordError();
 
 		for (const keySlot of this.keySlots) {
