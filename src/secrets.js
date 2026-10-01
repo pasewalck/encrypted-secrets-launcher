@@ -84,22 +84,23 @@ export class Secrets {
 		this.keySlots.splice(realIndex, 1);
 	}
 
-	getKey(password) {
+	getKey(password, ignoreKeySlotIdIndex = -1) {
 		let key;
 		if (password == undefined) throw new BadPasswordError();
 
 		for (const keySlot of this.keySlots) {
-			try {
-				key = decrypt(keySlot.encryptedKey, { password });
-				if (key) break;
-			} catch (error) {
-				if (
-					!error.message.includes('bad decrypt') &&
-					!error.message.includes('Unsupported state or unable to authenticate data')
-				) {
-					throw error;
+			if (ignoreKeySlotIdIndex == keySlot.idIndex)
+				try {
+					key = decrypt(keySlot.encryptedKey, { password });
+					if (key) break;
+				} catch (error) {
+					if (
+						!error.message.includes('bad decrypt') &&
+						!error.message.includes('Unsupported state or unable to authenticate data')
+					) {
+						throw error;
+					}
 				}
-			}
 		}
 
 		if (key == null) {
