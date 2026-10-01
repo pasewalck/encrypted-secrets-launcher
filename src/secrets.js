@@ -19,7 +19,7 @@ export class Var {
 }
 
 export class KeySlot {
-	constructor(name, idIndex, encryptedKey, isActive) {
+	constructor(name, idIndex, encryptedKey, isActive = true) {
 		this.name = name;
 		this.encryptedKey = encryptedKey;
 		this.idIndex = idIndex;
