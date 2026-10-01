@@ -22,6 +22,9 @@ importers:
             url:
                 specifier: ^0.11.4
                 version: 0.11.4
+            zod:
+                specifier: ^4.6.5
+                version: 4.6.5
         devDependencies:
             '@eslint/js':
                 specifier: ^10.0.1
@@ -2119,6 +2122,12 @@ packages:
             }
         engines: { node: '>=10' }
 
+    zod@4.6.5:
+        resolution:
+            {
+                integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==,
+            }
+
 snapshots:
     '@cacheable/memory@2.2.0':
         dependencies:
@@ -3248,3 +3257,5 @@ snapshots:
         optional: true
 
     yocto-queue@0.1.0: {}
+
+    zod@4.6.5: {}

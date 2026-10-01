@@ -5,6 +5,7 @@ import os from 'os';
 import crypto from 'crypto';
 import { Var, Secrets } from '../src/secrets.js';
 import { decrypt } from '../src/util/crypt.js';
+import { DataTamperError } from '../src/errors/data-tamper.error.js';
 
 function createTempDir() {
 	return fs.mkdtempSync(path.join(os.tmpdir(), 'secrets-test-'));
@@ -165,6 +166,28 @@ describe('Secrets', () => {
 			s.removeKeySlot(1);
 			const slots = s.keySlots;
 			expect(slots.length).toEqual(1);
+		});
+	});
+
+	describe('data tampering detection', () => {
+		it('throws on missing encryptedSecrets', () => {
+			fs.writeFileSync(filepath, JSON.stringify({ v: '1.2.9', keySlots: [] }));
+			expect(() => new Secrets(filepath, vars)).toThrow(DataTamperError);
+		});
+
+		it('throws on missing keySlots', () => {
+			fs.writeFileSync(filepath, JSON.stringify({ v: '1.2.9', encryptedSecrets: {} }));
+			expect(() => new Secrets(filepath, vars)).toThrow(DataTamperError);
+		});
+
+		it('throws on malformed keySlot', () => {
+			fs.writeFileSync(filepath, JSON.stringify({ v: '1.2.9', encryptedSecrets: {}, keySlots: [{ name: 'a' }] }));
+			expect(() => new Secrets(filepath, vars)).toThrow(DataTamperError);
+		});
+
+		it('throws on unknown version', () => {
+			fs.writeFileSync(filepath, JSON.stringify({ v: '9.9.9', encryptedSecrets: {}, keySlots: [] }));
+			expect(() => new Secrets(filepath, vars)).toThrow(DataTamperError);
 		});
 	});
 

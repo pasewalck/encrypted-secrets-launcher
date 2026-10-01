@@ -4,8 +4,38 @@ import { BadPasswordError } from './errors/bad-password.error.js';
 import { UnlockError } from './errors/unlock.error.js';
 import { indexToGreekLetterName } from './util/greek-letters.js';
 import { KeySlotRemoveError } from './errors/keyslot-remove.error.js';
+import { DataTamperError } from './errors/data-tamper.error.js';
+import { z } from 'zod';
 
 const CURRENT_VERSION = '1.2.9';
+
+const encryptedPayload = z.object({
+	v: z.number(),
+	alg: z.string(),
+	iv: z.string(),
+	tag: z.string(),
+	passwordSalt: z.string().nullable(),
+	data: z.string(),
+});
+
+const keySlot129 = z.object({
+	name: z.string(),
+	idIndex: z.number(),
+	encryptedKey: encryptedPayload,
+	isActive: z.boolean(),
+});
+
+const keySlot120 = z.object({
+	name: z.string(),
+	idIndex: z.number(),
+	encryptedKey: encryptedPayload,
+});
+
+const dataSchema = z.discriminatedUnion('v', [
+	z.object({ v: z.literal('1.2.9'), encryptedSecrets: z.record(encryptedPayload), keySlots: z.array(keySlot129) }),
+	z.object({ v: z.literal('1.2.0'), encryptedSecrets: z.record(encryptedPayload), keySlots: z.array(keySlot120) }),
+	z.object({ v: z.literal('legacy'), encryptedSecrets: z.record(z.string()), keySlots: z.array(z.string()) }),
+]);
 
 export class Var {
 	/**
@@ -58,30 +88,33 @@ export class Secrets {
 		this.key = null;
 		this.isInit = !fs.existsSync(filepath);
 		if (!this.isInit) {
-			const data = JSON.parse(fs.readFileSync(filepath, 'utf8'));
-			const v = data.v || 'legacy';
+			const raw = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+			const data = { ...raw, v: raw.v ?? 'legacy' };
+			const parsed = dataSchema.safeParse(data);
+			if (!parsed.success) {
+				throw new DataTamperError('Datafile is corrupted or has been tampered with.');
+			}
+			const { v, encryptedSecrets, keySlots } = parsed.data;
 			this.lastVersion = v;
+			this.encryptedSecrets = encryptedSecrets;
 			switch (v) {
 				case '1.2.9':
-					this.encryptedSecrets = data.encryptedSecrets;
-					this.keySlots = data.keySlots.map(
+					this.keySlots = keySlots.map(
 						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey, keySlot.isActive)
 					);
 					break;
 				case '1.2.0':
-					this.encryptedSecrets = data.encryptedSecrets;
-					this.keySlots = data.keySlots.map(
+					this.keySlots = keySlots.map(
 						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey, true)
 					);
 					break;
 				case 'legacy':
-					this.encryptedSecrets = data.encryptedSecrets;
-					this.keySlots = data.keySlots.map(
+					this.keySlots = keySlots.map(
 						(keySlot, idIndex) => new KeySlot(indexToGreekLetterName(idIndex), idIndex, keySlot, true)
 					);
 					break;
 				default:
-					throw new Error('Datafile has invalid Version. Please make sure you are using a valid file.');
+					throw new DataTamperError();
 			}
 		}
 	}
