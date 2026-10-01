@@ -89,18 +89,18 @@ export class Secrets {
 		if (password == undefined) throw new BadPasswordError();
 
 		for (const keySlot of this.keySlots) {
-			if (ignoreKeySlotIdIndex == keySlot.idIndex)
-				try {
-					key = decrypt(keySlot.encryptedKey, { password });
-					if (key) break;
-				} catch (error) {
-					if (
-						!error.message.includes('bad decrypt') &&
-						!error.message.includes('Unsupported state or unable to authenticate data')
-					) {
-						throw error;
-					}
+			if (ignoreKeySlotIdIndex == keySlot.idIndex) continue;
+			try {
+				key = decrypt(keySlot.encryptedKey, { password });
+				if (key) break;
+			} catch (error) {
+				if (
+					!error.message.includes('bad decrypt') &&
+					!error.message.includes('Unsupported state or unable to authenticate data')
+				) {
+					throw error;
 				}
+			}
 		}
 
 		if (key == null) {
