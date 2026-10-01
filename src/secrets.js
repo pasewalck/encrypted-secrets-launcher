@@ -17,10 +17,11 @@ export class Var {
 }
 
 export class KeySlot {
-	constructor(name, idIndex, encryptedKey) {
+	constructor(name, idIndex, encryptedKey, isActive) {
 		this.name = name;
 		this.encryptedKey = encryptedKey;
 		this.idIndex = idIndex;
+		this.isActive = isActive;
 	}
 }
 
@@ -44,10 +45,16 @@ export class Secrets {
 			const data = JSON.parse(fs.readFileSync(filepath, 'utf8'));
 			const v = data.v || 'legacy';
 			switch (v) {
+				case '1.2.9':
+					this.encryptedSecrets = data.encryptedSecrets;
+					this.keySlots = data.keySlots.map(
+						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey, keySlot.isActive)
+					);
+					break;
 				case '1.2.0':
 					this.encryptedSecrets = data.encryptedSecrets;
 					this.keySlots = data.keySlots.map(
-						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey)
+						(keySlot) => new KeySlot(keySlot.name, keySlot.idIndex, keySlot.encryptedKey, true)
 					);
 					break;
 				case 'legacy':
@@ -90,6 +97,8 @@ export class Secrets {
 
 		for (const keySlot of this.keySlots) {
 			if (ignoreKeySlotIdIndex == keySlot.idIndex) continue;
+			if (!keySlot.isActive) continue;
+
 			try {
 				key = decrypt(keySlot.encryptedKey, { password });
 				if (key) break;
