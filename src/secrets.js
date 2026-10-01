@@ -33,6 +33,8 @@ export class Secrets {
 			);
 		}
 		this.doBackups = doBackups;
+		this.lastVersion = null;
+		this.newVersion = null;
 		this.filepath = filepath;
 		this.vars = vars;
 		this.secretsMap = new Map();
@@ -44,6 +46,8 @@ export class Secrets {
 		if (!this.isInit) {
 			const data = JSON.parse(fs.readFileSync(filepath, 'utf8'));
 			const v = data.v || 'legacy';
+			this.lastVersion = v;
+			this.newVersion = '1.2.9';
 			switch (v) {
 				case '1.2.9':
 					this.encryptedSecrets = data.encryptedSecrets;
@@ -177,7 +181,7 @@ export class Secrets {
 		fs.writeFileSync(
 			this.filepath,
 			JSON.stringify({
-				v: '1.2.0',
+				v: this.newVersion,
 				encryptedSecrets: this.encryptedSecrets,
 				keySlots: this.keySlots,
 			})
