@@ -64,7 +64,7 @@ export class Secrets {
 				case 'legacy':
 					this.encryptedSecrets = data.encryptedSecrets;
 					this.keySlots = data.keySlots.map(
-						(keySlot, idIndex) => new KeySlot(indexToGreekLetterName(idIndex), idIndex, keySlot)
+						(keySlot, idIndex) => new KeySlot(indexToGreekLetterName(idIndex), idIndex, keySlot, true)
 					);
 					break;
 				default:
