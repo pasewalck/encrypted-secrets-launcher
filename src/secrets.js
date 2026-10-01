@@ -19,6 +19,12 @@ export class Var {
 }
 
 export class KeySlot {
+	/**
+	 * @param {string} name
+	 * @param {number} idIndex
+	 * @param {string} encryptedKey
+	 * @param {boolean} [isActive]
+	 */
 	constructor(name, idIndex, encryptedKey, isActive = true) {
 		this.name = name;
 		this.encryptedKey = encryptedKey;
@@ -28,6 +34,12 @@ export class KeySlot {
 }
 
 export class Secrets {
+	/**
+	 * @param {string} filepath
+	 * @param {Var[]} vars
+	 * @param {?string} [legacyFilepath]
+	 * @param {boolean} [doBackups]
+	 */
 	constructor(filepath, vars, legacyFilepath = null, doBackups = true) {
 		if (legacyFilepath) {
 			throw new Error(
@@ -74,6 +86,12 @@ export class Secrets {
 		}
 	}
 
+	/**
+	 * @param {string} password
+	 * @param {string} [name]
+	 * @param {string} [currentPassword]
+	 * @returns {boolean}
+	 */
 	addKeySlot(password, name = undefined, currentPassword = undefined) {
 		const key = this.key ? this.key : this.getKey(currentPassword);
 
@@ -89,6 +107,9 @@ export class Secrets {
 		return true;
 	}
 
+	/**
+	 * @param {number} idIndex
+	 */
 	removeKeySlot(idIndex) {
 		const idIndecies = this.keySlots.map((v) => v.idIndex);
 		const realIndex = idIndecies.indexOf(idIndex);
@@ -96,6 +117,11 @@ export class Secrets {
 		this.keySlots.splice(realIndex, 1);
 	}
 
+	/**
+	 * @param {string} password
+	 * @param {number} [ignoreKeySlotIdIndex]
+	 * @returns {Buffer|string}
+	 */
 	getKey(password, ignoreKeySlotIdIndex = -1) {
 		let key;
 		if (password == undefined) throw new BadPasswordError();
@@ -124,6 +150,9 @@ export class Secrets {
 		return key;
 	}
 
+	/**
+	 * @param {string} password
+	 */
 	open(password) {
 		if (this.isInit) {
 			this.key = generateKey();
@@ -154,23 +183,39 @@ export class Secrets {
 		this.isInit = false;
 	}
 
+	/**
+	 * @returns {boolean}
+	 */
 	getIsInit() {
 		return this.isInit;
 	}
 
+	/**
+	 * @returns {void}
+	 */
 	close() {
 		this.isOpen = false;
 		this.secretsMap.clear();
 	}
 
+	/**
+	 * @returns {boolean}
+	 */
 	getIsOpen() {
 		return this.isOpen;
 	}
 
+	/**
+	 * @param {boolean} [json]
+	 * @returns {Object|Map<string, any>}
+	 */
 	getSecrets(json = true) {
 		return json ? Object.fromEntries(this.secretsMap) : this.secretsMap;
 	}
 
+	/**
+	 * @returns {void}
+	 */
 	save() {
 		for (const v of this.vars) {
 			if (this.secretsMap.has(v.key))
