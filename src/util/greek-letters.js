@@ -1,4 +1,4 @@
-import { capitalize } from './strings';
+import { capitalize } from './strings.js';
 
 export const greekLetterNames = [
 	'alpha',
